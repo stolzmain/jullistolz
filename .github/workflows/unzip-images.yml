@@ -1,0 +1,27 @@
+name: Распаковать images.zip в assets
+on:
+  workflow_dispatch:   # запуск вручную
+
+jobs:
+  unzip-images:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout репозитория
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Перейти в папку assets и распаковать архив
+        run: |
+          cd jullistolz/ux/assets
+          unzip -o images.zip
+          # (Опционально) удалить архив после распаковки, чтобы не засорять
+          rm -f images.zip
+
+      - name: Сохранить изменения
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Распакован images.zip в папку assets"
