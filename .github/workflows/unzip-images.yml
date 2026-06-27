@@ -1,6 +1,6 @@
-name: Распаковать images.zip в assets
+name: Распаковать images.zip
 on:
-  workflow_dispatch:   # запуск вручную
+  workflow_dispatch:
 
 jobs:
   unzip-images:
@@ -14,14 +14,20 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Перейти в папку assets и распаковать архив
+      - name: Найти и распаковать все images.zip
         run: |
-          cd jullistolz/ux/assets
-          unzip -o images.zip
-          # (Опционально) удалить архив после распаковки, чтобы не засорять
-          rm -f images.zip
+          # Ищем все файлы images.zip в репозитории
+          find . -name "images.zip" -type f | while read zipfile; do
+            dir=$(dirname "$zipfile")
+            echo "Найден архив: $zipfile"
+            echo "Распаковываем в: $dir"
+            cd "$dir"
+            unzip -o images.zip
+            rm -f images.zip   # удаляем архив после распаковки
+            cd - >/dev/null
+          done
 
       - name: Сохранить изменения
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Распакован images.zip в папку assets"
+          commit_message: "Распакованы все images.zip"
