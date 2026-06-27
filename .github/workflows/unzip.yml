@@ -1,0 +1,40 @@
+name: Распаковка архива и очистка
+on:
+  workflow_dispatch:
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout репозитория
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Очистка корня (сохраняем .git, ux и .github/workflows)
+        run: |
+          # Сохраняем нужные папки во временное место
+          mkdir -p /tmp/keep
+          mv ux /tmp/keep/ 2>/dev/null || true
+          mv .github /tmp/keep/ 2>/dev/null || true
+          # Удаляем всё, кроме .git (но не удаляем .github, так как мы его переместили)
+          find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.git' -exec rm -rf {} +
+          # Возвращаем папки
+          mv /tmp/keep/* .
+          rm -rf /tmp/keep
+
+      - name: Распаковка архива с перезаписью
+        run: unzip -o jullistolz.ru.zip -d ./распакованный_сайт
+
+      - name: Перенос файлов в корень
+        run: |
+          mv ./распакованный_сайт/jullistolz.ru/ux/* ./
+          rm -rf ./распакованный_сайт
+
+      - name: Сохранение изменений
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Распакован архив сайта после очистки"
