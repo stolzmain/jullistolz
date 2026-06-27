@@ -1,14 +1,23 @@
 name: Распаковка архива
-on: [workflow_dispatch] # Будет запускаться только когда вы нажмете кнопку "Run workflow"
+on:
+  workflow_dispatch: # Запуск вручную
 
 jobs:
   unzip:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Распаковка
+      - name: Checkout репозитория
+        uses: actions/checkout@v4
+        with:
+          # Явно передаём токен, чтобы у экшена были права на запись
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Распаковка архива
         run: unzip jullistolz.ru.zip -d ./распакованный_сайт
+
       - name: Сохранение изменений
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Распакован архив сайта"
+          # Передаём тот же токен для git push
+          token: ${{ secrets.GITHUB_TOKEN }}
