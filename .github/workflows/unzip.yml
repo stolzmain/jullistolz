@@ -1,0 +1,14 @@
+name: Распаковка архива
+on: [workflow_dispatch] # Будет запускаться только когда вы нажмете кнопку "Run workflow"
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Распаковка
+        run: unzip jullistolz.ru.zip -d ./распакованный_сайт
+      - name: Сохранение изменений
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Распакован архив сайта"
