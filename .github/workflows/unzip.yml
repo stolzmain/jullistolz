@@ -6,7 +6,7 @@ jobs:
   unzip:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # даём права на запись
+      contents: write
 
     steps:
       - name: Checkout репозитория
@@ -14,8 +14,11 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Распаковка архива
-        run: unzip jullistolz.ru.zip -d ./распакованный_сайт
+      - name: Удаление старой временной папки (если есть)
+        run: rm -rf ./распакованный_сайт
+
+      - name: Распаковка архива с принудительной перезаписью
+        run: unzip -o jullistolz.ru.zip -d ./распакованный_сайт
 
       - name: Перенос файлов в корень и удаление временной папки
         run: |
