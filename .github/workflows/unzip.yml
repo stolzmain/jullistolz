@@ -6,20 +6,23 @@ jobs:
   unzip:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # явно даём права на запись
+      contents: write   # даём права на запись
 
     steps:
       - name: Checkout репозитория
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}   # токен передаётся в checkout, он сохранится в локальном git
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Распаковка архива
         run: unzip jullistolz.ru.zip -d ./распакованный_сайт
+
+      - name: Перенос файлов в корень и удаление временной папки
+        run: |
+          mv ./распакованный_сайт/jullistolz.ru/ux/* ./
+          rm -rf ./распакованный_сайт
 
       - name: Сохранение изменений
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Распакован архив сайта"
-          # Параметр token отсутствует — не передаём его.
-          # Действие автоматически использует GITHUB_TOKEN из окружения.
