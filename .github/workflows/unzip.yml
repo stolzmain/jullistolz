@@ -14,32 +14,40 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # 1. Очищаем корень от всего, кроме .git, .github, ux
-      - name: Очистка корня (сохраняем .git, .github и ux)
-        run: |
-          find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.git' ! -name '.github' ! -name 'ux' -exec rm -rf {} +
-
-      # 2. Распаковываем архив во временную папку
+      # 1. Распаковываем архив во временную папку (до очистки)
       - name: Распаковка архива
         run: |
           mkdir -p ./temp_archive
           unzip -o jullistolz.ru.zip -d ./temp_archive
 
-      # 3. Перемещаем содержимое jullistolz.ru/ux в папку ux (перезаписывая)
-      - name: Перемещение файлов в ux
+      # 2. Очищаем корень от всего, кроме .git, .github, ux (но не удаляем архив, он уже не нужен)
+      - name: Очистка корня
         run: |
-          # Если папка ux уже существует, удаляем её содержимое (чтобы полностью заменить)
-          rm -rf ./ux/* 2>/dev/null || true
-          # Копируем всё из архива в ux
+          # Сохраняем нужные папки
+          mkdir -p /tmp/keep
+          mv ux /tmp/keep/ 2>/dev/null || true
+          mv .github /tmp/keep/ 2>/dev/null || true
+          # Удаляем всё, кроме .git и временной папки temp_archive (она нам ещё нужна)
+          find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.git' ! -name 'temp_archive' -exec rm -rf {} +
+          # Возвращаем папки
+          mv /tmp/keep/* . 2>/dev/null || true
+          rm -rf /tmp/keep
+
+      # 3. Перемещаем содержимое temp_archive/jullistolz.ru/ux в папку ux
+      - name: Копирование файлов в ux
+        run: |
+          # Если папка ux не существует, создаём
+          mkdir -p ux
+          # Копируем всё содержимое (перезаписывая)
           cp -r ./temp_archive/jullistolz.ru/ux/* ./ux/
           # Удаляем временную папку
           rm -rf ./temp_archive
 
-      # 4. Удаляем сам архив (чтобы не засорять)
+      # 4. Удаляем архив (если он ещё есть)
       - name: Удаление архива
         run: rm -f jullistolz.ru.zip
 
-      # 5. Сохраняем изменения в Git
+      # 5. Сохраняем изменения
       - name: Сохранение изменений
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
