@@ -1,12 +1,12 @@
 name: Очистка репозитория (оставить только ux и .github/workflows)
 on:
-  workflow_dispatch:   # запуск вручную
+  workflow_dispatch:
 
 jobs:
   clean:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # нужно для push
+      contents: write
 
     steps:
       - name: Checkout
@@ -14,23 +14,14 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Удалить всё, кроме ux и .github/workflows
+      - name: Удалить всё, кроме ux, .github и .git
         run: |
-          # Перемещаемся в корень
-          cd $GITHUB_WORKSPACE
-
-          # Временно перемещаем защищённые папки в безопасное место
           mkdir -p /tmp/keep
           mv ux /tmp/keep/ 2>/dev/null || true
           mv .github /tmp/keep/ 2>/dev/null || true
-
-          # Удаляем всё остальное (включая скрытые файлы и папки, кроме . и ..)
-          find . -maxdepth 1 ! -name '.' ! -name '..' -exec rm -rf {} +
-
-          # Возвращаем папки обратно
+          # Удаляем всё остальное, но сохраняем .git
+          find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.git' -exec rm -rf {} +
           mv /tmp/keep/* .
-
-          # Убираем временную папку
           rm -rf /tmp/keep
 
       - name: Сохранить изменения
