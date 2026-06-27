@@ -1,4 +1,4 @@
-name: Распаковка архива и очистка
+name: Распаковка архива в папку ux
 on:
   workflow_dispatch:
 
@@ -14,27 +14,33 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Очистка корня (сохраняем .git, ux и .github/workflows)
+      # 1. Очищаем корень от всего, кроме .git, .github, ux
+      - name: Очистка корня (сохраняем .git, .github и ux)
         run: |
-          # Сохраняем нужные папки во временное место
-          mkdir -p /tmp/keep
-          mv ux /tmp/keep/ 2>/dev/null || true
-          mv .github /tmp/keep/ 2>/dev/null || true
-          # Удаляем всё, кроме .git (но не удаляем .github, так как мы его переместили)
-          find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.git' -exec rm -rf {} +
-          # Возвращаем папки
-          mv /tmp/keep/* .
-          rm -rf /tmp/keep
+          find . -maxdepth 1 ! -name '.' ! -name '..' ! -name '.git' ! -name '.github' ! -name 'ux' -exec rm -rf {} +
 
-      - name: Распаковка архива с перезаписью
-        run: unzip -o jullistolz.ru.zip -d ./распакованный_сайт
-
-      - name: Перенос файлов в корень
+      # 2. Распаковываем архив во временную папку
+      - name: Распаковка архива
         run: |
-          mv ./распакованный_сайт/jullistolz.ru/ux/* ./
-          rm -rf ./распакованный_сайт
+          mkdir -p ./temp_archive
+          unzip -o jullistolz.ru.zip -d ./temp_archive
 
+      # 3. Перемещаем содержимое jullistolz.ru/ux в папку ux (перезаписывая)
+      - name: Перемещение файлов в ux
+        run: |
+          # Если папка ux уже существует, удаляем её содержимое (чтобы полностью заменить)
+          rm -rf ./ux/* 2>/dev/null || true
+          # Копируем всё из архива в ux
+          cp -r ./temp_archive/jullistolz.ru/ux/* ./ux/
+          # Удаляем временную папку
+          rm -rf ./temp_archive
+
+      # 4. Удаляем сам архив (чтобы не засорять)
+      - name: Удаление архива
+        run: rm -f jullistolz.ru.zip
+
+      # 5. Сохраняем изменения в Git
       - name: Сохранение изменений
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Распакован архив сайта после очистки"
+          commit_message: "Обновление сайта из архива (папка ux)"
